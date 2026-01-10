@@ -1,0 +1,18 @@
+# Default owners for everything in the repo
+* @your-org/maintainers
+
+# Frontend code
+/apps/frontend/ @your-org/frontend-team
+/libs/ui/ @your-org/frontend-team
+
+# Backend code
+/apps/backend/ @your-org/backend-team
+
+# Infrastructure and DevOps
+/docker-compose.yml @your-org/devops-team
+/Dockerfile @your-org/devops-team
+/.github/workflows/ @your-org/devops-team
+
+# Documentation
+*.md @your-org/documentation-team
+/docs/ @your-org/documentation-team

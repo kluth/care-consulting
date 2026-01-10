@@ -1,96 +1,375 @@
-# CareConsulting
+# care-consulting
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+[![CI](https://github.com/YOUR_ORG/care-consulting/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_ORG/care-consulting/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/YOUR_ORG/care-consulting/branch/main/graph/badge.svg)](https://codecov.io/gh/YOUR_ORG/care-consulting)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
+[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
+[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+A modern, full-featured Nx monorepo with Angular frontend, NestJS backend, and optimal developer experience.
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+## 🚀 Features
 
-## Run tasks
+### Frontend & UI
 
-To run tasks with Nx use:
+- **Angular 18+** with standalone components and signals
+- **PWA** support for offline functionality
+- **Storybook** with DX addons (a11y, interactions, dark mode)
+- **Compodoc** for automatic documentation generation
+- **MSW** for API mocking in tests and Storybook
+- **Bundle Analyzer** for optimizing bundle sizes
 
-```sh
-npx nx <target> <project-name>
+### Backend & API
+
+- **NestJS** backend with production-ready features
+- **Swagger/OpenAPI** auto-generated API documentation at `/api/docs`
+- **OpenAPI Client Generator** for type-safe frontend API services
+- **Prisma ORM** with PostgreSQL for database management
+- **Authentication** scaffold with JWT, bcrypt, and Passport
+- **Environment Validation** with Zod for runtime safety
+- **Health check** endpoint at `/api/health`
+- **Rate limiting** and throttling
+- **Security headers** with Helmet
+- **Request validation** with class-validator
+- **CORS** and compression enabled
+- **Sentry** integration for error tracking
+
+### Testing & Quality
+
+- **Vitest** for lightning-fast unit testing
+- **Cypress** for E2E and component testing
+- **MSW** for reliable API mocking
+- **Code coverage** tracking with Codecov
+- **Accessibility testing** with pa11y-ci and axe-core
+- **Lighthouse CI** for performance monitoring
+
+### Developer Experience
+
+- **Commitizen + Commitlint** for consistent commit messages
+- **Semantic Release** for automated versioning and changelogs
+- **Renovate Bot** for automated dependency updates
+- **Husky + lint-staged** for pre-commit checks
+- **ESLint + Prettier** for code quality
+- **TypeScript strict mode** for type safety
+- **Path aliases** for clean imports
+- **ADR** (Architecture Decision Records) for documenting decisions
+- **Dev Containers** for consistent development environments
+
+### DevOps & Infrastructure
+
+- **Docker** support with docker-compose
+- **GitHub Actions CI/CD** with matrix testing, auto-merge, and security scanning
+- **GitHub Templates** for issues and PRs
+- **CODEOWNERS** for code review automation
+- **GitHub CLI integration** (optional) - automatically creates remote repo and pushes code
+- **Nx caching** for faster builds
+- **VSCode integration** with tasks, launch configs, and recommended extensions
+
+## 📁 Project Structure
+
+```
+care-consulting/
+├── apps/
+│   ├── frontend/          # Angular standalone app
+│   ├── frontend-e2e/      # Cypress E2E tests
+│   └── backend/           # NestJS API
+├── libs/
+│   ├── ui/                # Shared Angular components
+│   └── shared/
+│       ├── utilities/     # Common utility functions
+│       ├── types/         # Shared TypeScript types
+│       └── data-access/   # API client and services
+├── .github/workflows/     # CI/CD pipelines
+├── .husky/                # Git hooks
+└── .vscode/               # VSCode settings
 ```
 
-For example:
+## 🛠️ Setup
 
-```sh
-npx nx build myproject
+### Prerequisites
+
+- Node.js 20+
+- npm 10+
+- Docker (optional)
+
+### Installation
+
+1. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Set up environment variables:
+   ```bash
+   cp apps/backend/.env.example apps/backend/.env.development
+   ```
+
+## 🏃 Development
+
+### Run both frontend and backend concurrently:
+
+```bash
+npm run dev:all
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+### Run individually:
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Add new projects
-
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
-
-To install a new plugin you can use the `nx add` command. Here's an example of adding the React plugin:
-```sh
-npx nx add @nx/react
+```bash
+npm run dev:frontend  # Frontend at http://localhost:4200
+npm run dev:backend   # Backend at http://localhost:3000
 ```
 
-Use the plugin's generator to create new projects. For example, to create a new React app or library:
+### Using Docker:
 
-```sh
-# Generate an app
-npx nx g @nx/react:app demo
-
-# Generate a library
-npx nx g @nx/react:lib some-lib
+```bash
+docker-compose up
 ```
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+## 📚 Storybook
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Run Storybook for UI component development:
 
-## Set up CI!
-
-### Step 1
-
-To connect to Nx Cloud, run the following command:
-
-```sh
-npx nx connect
+```bash
+npm run storybook
 ```
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+Access Storybook at http://localhost:4400
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Storybook includes DX-enhancing addons:
 
-### Step 2
+- **Accessibility (a11y)**: Test components for accessibility issues
+- **Interactions**: Test component interactions and user flows
+- **Dark Mode**: Toggle between light and dark themes
+- **Links**: Navigate between stories
 
-Use the following command to configure a CI workflow for your workspace:
+### Build Storybook for deployment:
 
-```sh
-npx nx g ci-workflow
+```bash
+npm run build-storybook
 ```
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## 🧪 Testing
 
-## Install Nx Console
+### Run all tests:
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+```bash
+npm test
+```
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Run tests in watch mode:
 
-## Useful links
+```bash
+npm run test:watch
+```
 
-Learn more:
+### Run tests with UI:
 
-- [Learn more about this workspace setup](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```bash
+npm run test:ui
+```
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Run E2E tests:
+
+```bash
+npm run e2e
+```
+
+### Run tests with coverage:
+
+```bash
+npm run test:coverage
+```
+
+## 🔍 Code Quality
+
+### Lint all projects:
+
+```bash
+npm run lint
+```
+
+### Fix linting issues:
+
+```bash
+npm run lint:fix
+```
+
+### Format code:
+
+```bash
+npm run format
+```
+
+### Check formatting:
+
+```bash
+npm run format:check
+```
+
+## 📝 Commits & Releases
+
+### Create a commit with Commitizen:
+
+```bash
+npm run commit
+```
+
+This opens an interactive prompt to create properly formatted conventional commits.
+
+### Create a release:
+
+```bash
+npm run release
+```
+
+Semantic Release automatically:
+
+- Determines the next version number
+- Generates a changelog
+- Creates a GitHub release
+- Publishes packages (if configured)
+
+## 📚 Documentation
+
+### Generate Angular documentation with Compodoc:
+
+```bash
+npm run docs        # Build docs
+npm run docs:serve  # Build and serve docs
+```
+
+### View Swagger API documentation:
+
+Navigate to `http://localhost:3000/api/docs` when backend is running.
+
+### View Component Testing:
+
+```bash
+npm run component-test  # Run Cypress component tests
+```
+
+## 🏗️ Building
+
+### Build all projects:
+
+```bash
+npm run build:all
+```
+
+### Build specific project:
+
+```bash
+npx nx build frontend
+npx nx build backend
+```
+
+## 📊 Nx Commands
+
+### View project graph:
+
+```bash
+npm run graph
+```
+
+### Run affected commands:
+
+```bash
+npm run affected:test   # Test only affected projects
+npm run affected:build  # Build only affected projects
+npm run affected:lint   # Lint only affected projects
+```
+
+## 🎯 Common Tasks
+
+### Add a new library:
+
+```bash
+npx nx g @nx/js:library libs/my-library --unitTestRunner=vitest
+```
+
+### Add a new Angular component to UI library:
+
+```bash
+npx nx g @nx/angular:component my-component --project=ui --export
+```
+
+### Add a new NestJS resource:
+
+```bash
+npx nx g @nx/nest:resource my-resource --project=backend
+```
+
+## 🐙 GitHub Setup
+
+If you didn't create a GitHub repository during installation, you can do so now:
+
+### With GitHub CLI (recommended):
+
+```bash
+gh repo create care-consulting --source=. --public --push
+```
+
+### Manually:
+
+1. Create a new repository on GitHub
+2. Add it as a remote:
+   ```bash
+   git remote add origin https://github.com/YOUR_USERNAME/care-consulting.git
+   git push -u origin main
+   ```
+
+### Configure GitHub Secrets
+
+For full CI/CD functionality, add these secrets in your repository settings:
+
+- `CODECOV_TOKEN` - From [codecov.io](https://codecov.io)
+- `SNYK_TOKEN` - From [snyk.io](https://snyk.io)
+- `SENTRY_AUTH_TOKEN` - From [sentry.io](https://sentry.io)
+- `LHCI_GITHUB_APP_TOKEN` - Optional, for Lighthouse CI
+
+### Enable Renovate Bot
+
+1. Install the [Renovate GitHub App](https://github.com/apps/renovate)
+2. Grant access to your repository
+3. Renovate will automatically create PRs for dependency updates
+
+## 🚢 Deployment
+
+### Production build:
+
+```bash
+npx nx build frontend --configuration=production
+npx nx build backend --configuration=production
+```
+
+### Docker build:
+
+```bash
+docker build -t care-consulting-backend .
+docker run -p 3000:3000 care-consulting-backend
+```
+
+## 📚 Documentation
+
+- [Nx Documentation](https://nx.dev)
+- [Angular Documentation](https://angular.dev)
+- [NestJS Documentation](https://nestjs.com)
+- [Vitest Documentation](https://vitest.dev)
+- [Cypress Documentation](https://cypress.io)
+
+## 🤝 Contributing
+
+1. Create a feature branch
+2. Make your changes
+3. Run tests and linting
+4. Submit a pull request
+
+## 📝 License
+
+MIT
+
+---
+
+Built with ❤️ using Nx, Angular, and NestJS

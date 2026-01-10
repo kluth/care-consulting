@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci
+
+      - uses: nrwl/nx-set-shas@v4
+
+      - run: npx nx format:check
+
+      - run: npx nx affected -t lint --parallel=3
+
+      - run: npx nx affected -t test --parallel=3 --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          directory: ./coverage
+          flags: unittests
+          name: codecov-umbrella
+
+      - run: npx nx affected -t build --parallel=3
+
+      - run: npx nx affected -t e2e --parallel=1

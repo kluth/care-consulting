@@ -1,0 +1,29 @@
+{
+  "name": "Nx Full-Stack Development",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "nrwl.angular-console",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "angular.ng-template",
+        "vitest.explorer",
+        "ms-vscode.vscode-typescript-next",
+        "prisma.prisma",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+      }
+    }
+  },
+  "forwardPorts": [3000, 4200, 4400, 5555],
+  "postCreateCommand": "npm install",
+  "remoteUser": "node"
+}
