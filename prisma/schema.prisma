@@ -5,13 +5,464 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
+// ============================================
+// User & Authentication (ADR-0006: Auth0)
+// ============================================
+
 model User {
+  id            String   @id @default(cuid())
+  auth0Id       String   @unique // Auth0 user ID (sub claim)
+  email         String   @unique
+  name          String?
+  avatarUrl     String?
+  role          UserRole @default(STUDENT)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  enrollments   Enrollment[]
+  payments      Payment[]
+  chatMessages  ChatMessage[]
+  progress      LessonProgress[]
+  
+  // Gamification
+  xp            Int      @default(0)
+  level         Int      @default(1)
+  badges        UserBadge[]
+  certificates  Certificate[]
+
+  // Affiliate
+  affiliateCode String?  @unique // Code this user shares
+  referredBy    String?  // Who referred this user
+  referrals     Referral[] @relation("Referrer")
+  commissions   AffiliateCommission[]
+  auditRuns     AuditRun[]
+}
+
+enum UserRole {
+  ADMIN
+  INSTRUCTOR
+  STUDENT
+}
+
+// ... existing models ...
+
+// ============================================
+// Affiliate System
+// ============================================
+
+model Referral {
+  id          String   @id @default(cuid())
+  referrerId  String
+  referrer    User     @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredUserId String @unique // The new user
+  status      ReferralStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum ReferralStatus {
+  PENDING
+  CONVERTED // Made a purchase
+  PAID      // Commission paid
+}
+
+model AffiliateCommission {
+  id          String   @id @default(cuid())
+  userId      String   // The affiliate
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Decimal
+  currency    String   @default("EUR")
+  reason      String   // e.g. "Course Purchase: C1"
+  status      CommissionStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum CommissionStatus {
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+}
+
+// ============================================
+// Audit Cockpit (ADR-0013)
+// ============================================
+
+model AuditTemplate {
+  id          String   @id @default(cuid())
+  title       String   // "Ambulant 2025"
+  description String?
+  type        FacilityType
+  version     String   @default("1.0")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sections    AuditSection[]
+  runs        AuditRun[]
+}
+
+enum FacilityType {
+  AMBULANT
+  STATIONAER
+  TAGESPFLEGE
+}
+
+model AuditSection {
+  id          String   @id @default(cuid())
+  templateId  String
+  template    AuditTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  title       String
+  order       Int      @default(0)
+  
+  questions   AuditQuestion[]
+}
+
+model AuditQuestion {
+  id          String   @id @default(cuid())
+  sectionId   String
+  section     AuditSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  text        String
+  hint        String?  // Help text
+  points      Int      @default(10)
+  isKoCriteria Boolean @default(false)
+  order       Int      @default(0)
+
+  answers     AuditAnswer[]
+}
+
+model AuditRun {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templateId  String
+  template    AuditTemplate @relation(fields: [templateId], references: [id])
+  
+  status      AuditStatus @default(IN_PROGRESS)
+  score       Float?   // Calculated Grade (1.0 - 5.0)
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  answers     AuditAnswer[]
+}
+
+enum AuditStatus {
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+model AuditAnswer {
+  id          String   @id @default(cuid())
+  runId       String
+  run         AuditRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  questionId  String
+  question    AuditQuestion @relation(fields: [questionId], references: [id])
+  
+  value       AnswerValue
+  note        String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([runId, questionId])
+}
+
+enum AnswerValue {
+  YES
+  NO
+  NOT_APPLICABLE
+}
+
+// ============================================
+// Gamification (ADR-0011)
+// ============================================
+
+model Badge {
+  id          String   @id @default(cuid())
+  slug        String   @unique // e.g. "first-course"
+  name        String
+  description String?
+  iconUrl     String?
+  xpValue     Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  earnedAt  DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+}
+
+model Certificate {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  issuedAt      DateTime @default(now())
+  verificationId String  @unique @default(cuid()) // Public verification code
+  pdfUrl        String?  // If we store it, otherwise generated on fly
+
+  @@unique([userId, courseId])
+  @@index([userId])
+}
+
+// ============================================
+// Landing Page / Lead Generation
+// ============================================
+
+model NewsletterSubscriber {
   id        String   @id @default(cuid())
   email     String   @unique
-  name      String?
+  consent   Boolean  @default(false)
+  source    String?
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ContactInquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  status    InquiryStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum InquiryStatus {
+  PENDING
+  REPLIED
+  ARCHIVED
+}
+
+// ============================================
+// Education Platform - Courses (ADR-0007: Mux)
+// ============================================
+
+model Course {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  description   String?
+  shortDescription String?
+  price         Decimal  @default(0)
+  currency      String   @default("EUR")
+  thumbnailUrl  String?
+  published     Boolean  @default(false)
+  featured      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  lessons       Lesson[]
+  enrollments   Enrollment[]
+  liveSessions  LiveSession[]
+  chatRoom      ChatRoom?
+  certificates  Certificate[]
+}
+
+model Lesson {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Mux Video (ADR-0007)
+  muxAssetId    String?  // Mux asset ID for management
+  muxPlaybackId String?  // Mux playback ID for streaming
+  muxSigningKeyId String? // For signed URLs
+
+  duration      Int?     // Duration in seconds
+  order         Int      @default(0)
+  isFree        Boolean  @default(false) // Preview lesson
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  progress      LessonProgress[]
+
+  @@index([courseId])
+}
+
+model LessonProgress {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId      String
+  lesson        Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  watchedSeconds Int     @default(0)
+  completed     Boolean  @default(false)
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@index([lessonId])
+}
+
+// ============================================
+// Enrollments & Payments (ADR-0010: Stripe)
+// ============================================
+
+model Enrollment {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  status        EnrollmentStatus @default(ACTIVE)
+  enrolledAt    DateTime @default(now())
+  expiresAt     DateTime? // For time-limited access
+
+  // Payment reference
+  paymentId     String?  @unique
+  payment       Payment? @relation(fields: [paymentId], references: [id])
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  REFUNDED
+}
+
+model Payment {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Stripe data
+  stripeSessionId     String   @unique
+  stripePaymentIntentId String?
+  stripeCustomerId    String?
+
+  amount              Decimal
+  currency            String   @default("EUR")
+  status              PaymentStatus @default(PENDING)
+
+  // Metadata
+  courseId            String?
+  courseTitle         String?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  completedAt         DateTime?
+
+  // Relations
+  enrollment          Enrollment?
+
+  @@index([userId])
+  @@index([stripeSessionId])
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+// ============================================
+// Live Sessions (ADR-0008: Zoom)
+// ============================================
+
+model LiveSession {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Zoom integration
+  zoomMeetingId String?
+  zoomJoinUrl   String?
+  zoomPassword  String?
+
+  // Scheduling
+  scheduledAt   DateTime
+  duration      Int      // Duration in minutes
+  timezone      String   @default("Europe/Berlin")
+
+  status        LiveSessionStatus @default(SCHEDULED)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([courseId])
+  @@index([scheduledAt])
+}
+
+enum LiveSessionStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+// ============================================
+// Real-time Chat (ADR-0009: Socket.io)
+// ============================================
+
+model ChatRoom {
+  id            String   @id @default(cuid())
+  name          String
+  courseId      String   @unique
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  messages      ChatMessage[]
+}
+
+model ChatMessage {
+  id            String   @id @default(cuid())
+  content       String
+
+  roomId        String
+  room          ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  senderId      String
+  sender        User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  // Message metadata
+  isEdited      Boolean  @default(false)
+  isDeleted     Boolean  @default(false)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([roomId])
+  @@index([senderId])
+  @@index([createdAt])
 }

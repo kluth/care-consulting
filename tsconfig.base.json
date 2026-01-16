@@ -18,7 +18,9 @@
       "@care-consulting/ui": ["libs/ui/src/index.ts"],
       "@care-consulting/shared/utilities": ["libs/shared/utilities/src/index.ts"],
       "@care-consulting/shared/types": ["libs/shared/types/src/index.ts"],
-      "@care-consulting/shared/data-access": ["libs/shared/data-access/src/index.ts"]
+      "@care-consulting/shared/data-access": ["libs/shared/data-access/src/index.ts"],
+      "@care-consulting/landing": ["libs/landing/src/index.ts"],
+      "@care-consulting/education": ["libs/education/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
