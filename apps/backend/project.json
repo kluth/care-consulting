@@ -59,6 +59,13 @@
           "buildTarget": "backend:build:production"
         }
       }
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{workspaceRoot}/coverage/apps/backend"],
+      "options": {
+        "reportsDirectory": "{workspaceRoot}/coverage/apps/backend"
+      }
     }
   },
   "tags": []
