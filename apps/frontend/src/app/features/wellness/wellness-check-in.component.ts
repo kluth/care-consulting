@@ -1,6 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { WellnessService } from './wellness.service';
 
 @Component({
   selector: 'app-wellness-check-in',
@@ -51,23 +52,39 @@ import { FormsModule } from '@angular/forms';
       border-radius: 6px;
       cursor: pointer;
     }
+    button.submit-btn:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
   `]
 })
 export class WellnessCheckInComponent {
+  private wellnessService = inject(WellnessService);
+  
   mood = signal<number>(3);
   stress = signal<number>(3);
   note = signal<string>('');
   submitted = signal<boolean>(false);
+  loading = signal<boolean>(false);
 
   setMood(val: number) { this.mood.set(val); }
   setStress(val: number) { this.stress.set(val); }
 
   submit() {
-    console.log('Wellness Check-In:', {
+    this.loading.set(true);
+    this.wellnessService.createCheckIn({
       mood: this.mood(),
       stress: this.stress(),
       note: this.note()
+    }).subscribe({
+      next: () => {
+        this.submitted.set(true);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Check-in failed', err);
+        this.loading.set(false);
+      }
     });
-    this.submitted.set(true);
   }
 }

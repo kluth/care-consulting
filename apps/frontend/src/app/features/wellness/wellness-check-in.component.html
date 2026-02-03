@@ -38,7 +38,12 @@
       placeholder="Optionale Notiz..."
       rows="3"></textarea>
 
-    <button class="submit-btn" (click)="submit()">Check-in abschließen</button>
+    <button 
+      class="submit-btn" 
+      [disabled]="loading()" 
+      (click)="submit()">
+      {{ loading() ? 'Wird gespeichert...' : 'Check-in abschließen' }}
+    </button>
   } @else {
     <div class="success-message">
       <h3>Tack!</h3>
