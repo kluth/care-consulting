@@ -51,6 +51,10 @@ model User {
   // Wellness (ADR-0018)
   wellnessCheckIns      WellnessCheckIn[]
   burnoutAssessments    BurnoutAssessment[]
+
+  // Shift-Aware Learning (ADR-0019)
+  shifts                UserShift[]
+  microProgress         MicroLessonProgress[]
 }
 
 enum UserRole {
@@ -642,6 +646,56 @@ model BurnoutAssessment {
   createdAt   DateTime @default(now())
 
   @@index([userId])
+}
+
+// ============================================
+// Shift-Aware Learning (ADR-0019)
+// ============================================
+
+model UserShift {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  startTime   DateTime
+  endTime     DateTime
+  type        ShiftType @default(DAY)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([startTime, endTime])
+}
+
+enum ShiftType {
+  DAY
+  EVENING
+  NIGHT
+  LONG_DAY
+}
+
+model MicroLessonProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String
+  
+  status      MicroProgressStatus @default(IN_PROGRESS)
+  lastReview  DateTime @default(now())
+  nextReview  DateTime?
+  box         Int      @default(1) // Spaced repetition box
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+}
+
+enum MicroProgressStatus {
+  IN_PROGRESS
+  MASTERED
+  RE-REVIEW_NEEDED
 }
 
 // User notification preferences (ADR-0017: Multi-channel)
