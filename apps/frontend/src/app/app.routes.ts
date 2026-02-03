@@ -15,6 +15,10 @@ export const appRoutes: Route[] = [
     path: 'academy',
     loadChildren: () => import('@care-consulting/education').then((m) => m.educationRoutes),
   },
+  {
+    path: 'wellness',
+    loadComponent: () => import('./features/wellness/wellness-dashboard.component').then(m => m.WellnessDashboardComponent)
+  },
   // Catch-all redirect
   {
     path: '**',

@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { WellnessModule } from './wellness/wellness.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { AppService } from './app.service';
         limit: 10,
       },
     ]),
+    WellnessModule,
   ],
   controllers: [AppController],
   providers: [
