@@ -698,6 +698,42 @@ enum MicroProgressStatus {
   RE-REVIEW_NEEDED
 }
 
+// ============================================
+// Simulation-Based Learning (ADR-0020)
+// ============================================
+
+model Scenario {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  thumbnailUrl  String?
+  
+  // JSON structure for the branching graph
+  // { nodes: { [id]: { text: string, type: 'start'|'choice'|'end', choices: [{text, nextId, points}] } } }
+  content       Json     
+  
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  results       ScenarioResult[]
+}
+
+model ScenarioResult {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scenarioId  String
+  scenario    Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  
+  score       Int      // 0-100
+  decisions   Json     // History of nodes visited
+  completedAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([scenarioId])
+}
+
 // User notification preferences (ADR-0017: Multi-channel)
 model NotificationPreference {
   id            String   @id @default(cuid())
