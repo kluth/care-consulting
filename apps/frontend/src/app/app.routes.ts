@@ -17,7 +17,7 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'wellness',
-    loadComponent: () => import('./features/wellness/wellness-check-in.component').then(m => m.WellnessCheckInComponent)
+    loadComponent: () => import('./features/wellness/wellness-dashboard.component').then(m => m.WellnessDashboardComponent)
   },
   // Catch-all redirect
   {

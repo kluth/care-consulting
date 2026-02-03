@@ -38,8 +38,8 @@ export const educationRoutes: Route[] = [
   },
   {
     path: 'wellness',
-    loadComponent: () => import('../../../apps/frontend/src/app/features/wellness/wellness-check-in.component').then(m => m.WellnessCheckInComponent),
+    loadComponent: () => import('../../../apps/frontend/src/app/features/wellness/wellness-dashboard.component').then(m => m.WellnessDashboardComponent),
     canActivate: [authGuard],
-    title: 'Wellness Check-in | Care Consulting Academy',
+    title: 'Wellness Dashboard | Care Consulting Academy',
   }
 ];
