@@ -55,6 +55,9 @@ model User {
   // Shift-Aware Learning (ADR-0019)
   shifts                UserShift[]
   microProgress         MicroLessonProgress[]
+
+  // AI Documentation (ADR-0021)
+  docDrafts             DocumentationDraft[]
 }
 
 enum UserRole {
@@ -732,6 +735,32 @@ model ScenarioResult {
 
   @@index([userId])
   @@index([scenarioId])
+}
+
+// ============================================
+// AI Documentation Assistant (ADR-0021)
+// ============================================
+
+model DocumentationDraft {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  rawInput      String   @db.Text
+  structuredData Json     // Extracted SIS facts
+  status        DraftStatus @default(PENDING)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+}
+
+enum DraftStatus {
+  PENDING
+  REVIEWED
+  COMMITTED
+  DISCARDED
 }
 
 // User notification preferences (ADR-0017: Multi-channel)
