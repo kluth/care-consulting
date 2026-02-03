@@ -36,4 +36,10 @@ export const educationRoutes: Route[] = [
     canActivate: [authGuard],
     title: 'Mein Profil | Care Consulting Academy',
   },
+  {
+    path: 'wellness',
+    loadComponent: () => import('../../../apps/frontend/src/app/features/wellness/wellness-check-in.component').then(m => m.WellnessCheckInComponent),
+    canActivate: [authGuard],
+    title: 'Wellness Check-in | Care Consulting Academy',
+  }
 ];
