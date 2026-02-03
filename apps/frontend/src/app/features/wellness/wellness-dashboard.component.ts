@@ -1,12 +1,11 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { WellnessCheckInComponent } from './wellness-check-in.component';
 import { BreathingExerciseComponent } from './breathing-exercise.component';
+import { BurnoutAssessmentComponent } from './burnout-assessment.component';
 
 @Component({
   selector: 'app-wellness-dashboard',
   standalone: true,
-  imports: [CommonModule, WellnessCheckInComponent, BreathingExerciseComponent],
+  imports: [CommonModule, WellnessCheckInComponent, BreathingExerciseComponent, BurnoutAssessmentComponent],
   template: `
     <div class="dashboard-container">
       <header>
@@ -21,6 +20,10 @@ import { BreathingExerciseComponent } from './breathing-exercise.component';
         
         <section class="card-section">
           <app-breathing-exercise></app-breathing-exercise>
+        </section>
+
+        <section class="card-section wide">
+          <app-burnout-assessment></app-burnout-assessment>
         </section>
       </div>
     </div>
@@ -46,9 +49,15 @@ import { BreathingExerciseComponent } from './breathing-exercise.component';
       gap: 2rem;
       align-items: start;
     }
+    .wide {
+      grid-column: 1 / -1;
+    }
     @media (max-width: 600px) {
       .dashboard-grid {
         grid-template-columns: 1fr;
+      }
+      .wide {
+        grid-column: auto;
       }
     }
   `]
