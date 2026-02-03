@@ -1,0 +1,49 @@
+<div class="check-in-container">
+  @if (!submitted()) {
+    <h2>Daily Check-in</h2>
+    <p>Wie fühlst du dich heute?</p>
+    
+    <div class="section">
+      <label>Stimmung (1-5)</label>
+      <div class="scale-buttons">
+        @for (val of [1,2,3,4,5]; track val) {
+          <button 
+            type="button" 
+            class="scale-btn" 
+            [class.selected]="mood() === val"
+            (click)="setMood(val)">
+            {{ val }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="section">
+      <label>Stresslevel (1-5)</label>
+      <div class="scale-buttons">
+        @for (val of [1,2,3,4,5]; track val) {
+          <button 
+            type="button" 
+            class="scale-btn" 
+            [class.selected]="stress() === val"
+            (click)="setStress(val)">
+            {{ val }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <textarea 
+      [(ngModel)]="note" 
+      placeholder="Optionale Notiz..."
+      rows="3"></textarea>
+
+    <button class="submit-btn" (click)="submit()">Check-in abschließen</button>
+  } @else {
+    <div class="success-message">
+      <h3>Tack!</h3>
+      <p>Dein Check-in wurde gespeichert. Atme tief durch.</p>
+      <button class="submit-btn" (click)="submitted.set(false)">Neu starten</button>
+    </div>
+  }
+</div>
