@@ -26,7 +26,7 @@ model User {
   payments      Payment[]
   chatMessages  ChatMessage[]
   progress      LessonProgress[]
-  
+
   // Gamification
   xp            Int      @default(0)
   level         Int      @default(1)
@@ -39,6 +39,18 @@ model User {
   referrals     Referral[] @relation("Referrer")
   commissions   AffiliateCommission[]
   auditRuns     AuditRun[]
+
+  // Fortbildung (Continuing Education - ADR-0016, ADR-0017)
+  careRole              CareRole?  // Role in care facility
+  facilityId            String?    // Reference to employing facility
+  fortbildungEntries    FortbildungEntry[]
+  fortbildungPeriods    FortbildungPeriod[]
+  fortbildungCertificates FortbildungCertificate[]
+  notificationPreferences NotificationPreference?
+
+  // Wellness (ADR-0018)
+  wellnessCheckIns      WellnessCheckIn[]
+  burnoutAssessments    BurnoutAssessment[]
 }
 
 enum UserRole {
@@ -465,4 +477,214 @@ model ChatMessage {
   @@index([roomId])
   @@index([senderId])
   @@index([createdAt])
+}
+
+// ============================================
+// Fortbildungsmanager (ADR-0016, ADR-0017)
+// Continuing Education Compliance for Care Workers
+// ============================================
+
+// Care worker roles with different CE requirements
+enum CareRole {
+  PFLEGEFACHKRAFT       // 16h per 2 years
+  PRAXISANLEITER        // 24h per year (12h must be pedagogical)
+  PFLEGEHILFSKRAFT      // Facility-dependent
+  PDL                   // Pflegedienstleitung (Manager)
+}
+
+// Category of continuing education
+enum FortbildungCategory {
+  FACHLICH              // Professional/technical
+  PAEDAGOGISCH          // Pedagogical (required for Praxisanleiter)
+  SONSTIGE              // Other
+}
+
+// A single continuing education entry (internal or external)
+model FortbildungEntry {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  periodId      String?
+  period        FortbildungPeriod? @relation(fields: [periodId], references: [id])
+
+  // Training details
+  title         String
+  provider      String?  // External provider name
+  description   String?
+  hours         Float    // CE hours earned
+  category      FortbildungCategory @default(FACHLICH)
+  trainingDate  DateTime // When the training was completed
+
+  // Source tracking
+  isInternal    Boolean  @default(false) // From platform course
+  courseId      String?  // Reference to platform course if internal
+  documentUrl   String?  // Uploaded certificate/proof
+
+  // Verification
+  isVerified    Boolean  @default(false)
+  verifiedAt    DateTime?
+  verifiedBy    String?  // Admin user ID who verified
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([periodId])
+  @@index([trainingDate])
+}
+
+// A compliance period (e.g., 2024-2025 for Pflegefachkraft)
+model FortbildungPeriod {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Period definition
+  startDate     DateTime
+  endDate       DateTime
+  careRole      CareRole // Role determines requirements
+
+  // Requirements (calculated based on role, may be pro-rated)
+  requiredHours Float    // Total hours required
+  requiredPedagogicalHours Float @default(0) // For Praxisanleiter
+
+  // Progress tracking (denormalized for performance)
+  completedHours Float   @default(0)
+  completedPedagogicalHours Float @default(0)
+
+  // Status
+  status        ComplianceStatus @default(IN_PROGRESS)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  entries       FortbildungEntry[]
+  certificate   FortbildungCertificate?
+
+  @@unique([userId, startDate, endDate])
+  @@index([userId])
+  @@index([endDate])
+  @@index([status])
+}
+
+enum ComplianceStatus {
+  IN_PROGRESS   // Period active, not yet complete
+  COMPLIANT     // Requirements met
+  AT_RISK       // <30 days remaining with incomplete hours
+  NON_COMPLIANT // Period ended without meeting requirements
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED       // User already compliant
+}
+
+// Certificate for completed period (ADR-0016: RS256 JWT verification)
+model FortbildungCertificate {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  periodId      String   @unique
+  period        FortbildungPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  // Certificate data
+  shortId       String   @unique // Short URL-safe ID for QR code
+  jwtToken      String   @db.Text // RS256 signed JWT for verification
+  totalHours    Float
+  pedagogicalHours Float @default(0)
+
+  // PDF storage
+  pdfUrl        String?
+
+  // Status
+  isRevoked     Boolean  @default(false)
+  revokedAt     DateTime?
+  revokedReason String?
+
+  issuedAt      DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([shortId])
+}
+
+// ============================================
+// Wellness & Burnout Prevention (ADR-0018)
+// ============================================
+
+model WellnessCheckIn {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  mood      Int      // 1-5 scale
+  stress    Int      // 1-5 scale
+  note      String?
+  
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model BurnoutAssessment {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  score       Float    // Calculated CBI score
+  answers     Json     // Raw answers for history
+  
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+// User notification preferences (ADR-0017: Multi-channel)
+model NotificationPreference {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Channel preferences
+  emailEnabled  Boolean  @default(true)
+  pushEnabled   Boolean  @default(false)
+  inAppEnabled  Boolean  @default(true)
+
+  // Reminder preferences
+  reminderDays  Int[]    @default([90, 60, 30, 7]) // Days before deadline
+
+  // Manager alerts (for PDL)
+  teamAlertsEnabled Boolean @default(true)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Scheduled reminders queue (managed by Bull/Redis - ADR-0017)
+model FortbildungReminder {
+  id            String   @id @default(cuid())
+  userId        String
+  periodId      String
+
+  // Scheduling
+  scheduledFor  DateTime
+  daysRemaining Int      // 90, 60, 30, or 7
+
+  // Delivery status
+  status        ReminderStatus @default(PENDING)
+  sentAt        DateTime?
+  channels      String[] // ["email", "push", "in_app"]
+  error         String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, periodId, daysRemaining])
+  @@index([scheduledFor])
+  @@index([status])
 }
